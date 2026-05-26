@@ -1,0 +1,6 @@
+{
+  "name": "Music Player",
+  "description": "A high-fidelity interactive music player with synchronized lyrics, canvas-based wave visualizers, persistent queues, search, and refined gesture-friendly controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
