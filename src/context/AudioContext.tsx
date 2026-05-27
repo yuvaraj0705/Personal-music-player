@@ -55,10 +55,6 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const initFirebaseData = async () => {
       setIsLoadingTracks(true);
       await signInAnonymouslyUser();
-      const fetchedTracks = await fetchTracksFromFirestore();
-      if (fetchedTracks && fetchedTracks.length > 0) {
-        setTracks(fetchedTracks);
-      }
       setIsLoadingTracks(false);
     };
     initFirebaseData();

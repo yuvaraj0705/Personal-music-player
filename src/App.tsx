@@ -114,7 +114,7 @@ function MainLayout() {
               <Music size={18} className="animate-pulse" />
             </div>
             <span className="text-md font-bold tracking-tight text-white capitalize font-sans">
-              {activeTab === 'home' ? 'Cyber Beats' : activeTab}
+              {activeTab === 'home' ? "Uv's concert" : activeTab}
             </span>
           </div>
 
