@@ -14,6 +14,7 @@ export interface Track {
   id: string;
   title: string;
   artist: string;
+  album?: string;
   albumArt: string;
   duration: string; // MM:SS format for display
   durationSec: number; // Duration in seconds
@@ -43,6 +44,7 @@ export interface AudioContextType {
   favorites: string[]; // Track IDs
   recentlyPlayed: string[]; // Track IDs
   queue: Track[];
+  playlists: Playlist[];
   togglePlay: () => void;
   playTrack: (track: Track) => void;
   playPlaylist: (playlist: Playlist) => void;
@@ -55,6 +57,14 @@ export interface AudioContextType {
   toggleShuffle: () => void;
   toggleFavorite: (trackId: string) => void;
   addToQueue: (track: Track) => void;
+  createPlaylist: (title: string, imgUrl: string) => void;
+  deletePlaylist: (playlistId: string) => void;
+  addToPlaylist: (playlistId: string, track: Track) => void;
+  removeFromPlaylist: (playlistId: string, trackId: string) => void;
+  updateTrackCover: (trackId: string, imgUrl: string) => void;
+  removeFromQueue: (index: number) => void;
+  clearQueue: () => void;
+  reorderQueue: (startIndex: number, endIndex: number) => void;
   audioRef: React.RefObject<HTMLAudioElement | null>;
   audioContextRef: React.RefObject<AudioContext | null>;
   analyserRef: React.RefObject<AnalyserNode | null>;

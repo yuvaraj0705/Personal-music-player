@@ -24,14 +24,21 @@ import { SearchTab } from './components/SearchTab';
 import { LibraryTab } from './components/LibraryTab';
 import { NowPlayingDetail } from './components/NowPlayingDetail';
 import { SettingsModal } from './components/SettingsModal';
+import { TrackOptionsModal } from './components/TrackOptionsModal';
+import { QueuePanel } from './components/QueuePanel';
+import { PlaylistDetailPanel } from './components/PlaylistDetailPanel';
 import { USER_AVATAR } from './data';
+import { Track } from './types';
 
 function MainLayout() {
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'library'>('home');
   const [isNowPlayingOpen, setIsNowPlayingOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
   const [visualizerType, setVisualizerType] = useState<'bars' | 'wave' | 'retro-dots'>('wave');
   const [ambientGlow, setAmbientGlow] = useState(true);
+  const [trackOptionsTrack, setTrackOptionsTrack] = useState<Track | null>(null);
 
   const { 
     currentTrack, 
@@ -56,37 +63,51 @@ function MainLayout() {
             onOpenNowPlaying={() => setIsNowPlayingOpen(true)}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenSearch={() => setActiveTab('search')}
+            onOpenTrackOptions={(track) => setTrackOptionsTrack(track)}
+            onOpenPlaylist={(id) => setActivePlaylistId(id)}
           />
         );
       case 'search':
         return <SearchTab />;
       case 'library':
-        return <LibraryTab />;
+        return (
+          <LibraryTab 
+            onOpenTrackOptions={(track) => setTrackOptionsTrack(track)} 
+            onOpenPlaylist={(id) => setActivePlaylistId(id)}
+          />
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className={`min-h-screen text-brand-on-surface bg-brand-surface font-sans relative overflow-x-hidden select-none`}>
+    <div className={`min-h-screen text-brand-on-surface bg-black font-sans relative overflow-x-hidden select-none`}>
       
       {/* Absolute Ambient Glow Clouds */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {ambientGlow && (
           <motion.div 
+            key={`ambient-${currentTrack.id}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+            transition={{ duration: 1.5 }}
+            className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center"
           >
-            <div className="absolute -top-[15%] -left-[10%] w-[55%] h-[55%] rounded-full bg-brand-primary/10 blur-[130px] animate-[pulse_6s_infinite_ease-in-out]" />
-            <div className="absolute top-[40%] -right-[10%] w-[50%] h-[50%] rounded-full bg-brand-outline-variant/10 blur-[130px] animate-[pulse_8s_infinite_ease-in-out_delay-1000]" />
+            <img 
+              src={currentTrack.albumArt} 
+              alt=""
+              className="absolute w-[150%] h-[150%] object-cover blur-[120px] opacity-40 animate-[pulse_12s_infinite_ease-in-out]"
+            />
+            {/* Subtle overlay to keep text readable */}
+            <div className="absolute inset-0 bg-gradient-to-b from-brand-surface/40 to-brand-surface/80" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Top Header App Bar */}
-      <header className="fixed top-0 left-0 w-full z-40 bg-brand-surface/85 dark:bg-brand-surface/85 backdrop-blur-xl border-b border-white/5 shadow-sm">
+      <header className="fixed top-0 left-0 w-full z-40 bg-brand-surface/40 dark:bg-brand-surface/40 backdrop-blur-2xl border-b border-white/[0.03] shadow-sm">
         <div className="max-w-5xl mx-auto px-6 h-18 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="bg-brand-primary/10 p-1.5 rounded-lg text-brand-primary">
@@ -131,10 +152,10 @@ function MainLayout() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.25 }}
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.98 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
           >
             {renderTabContent()}
           </motion.div>
@@ -145,8 +166,8 @@ function MainLayout() {
       <div className="fixed bottom-20 left-0 right-0 z-40 px-4 pointer-events-none">
         <div className="max-w-xl mx-auto pointer-events-auto">
           <motion.div 
-            whileHover={{ scale: 1.01, y: -1 }}
-            className="bg-brand-surface-container/90 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden shadow-2xl flex items-center justify-between p-3.5 h-17 relative cursor-pointer"
+            whileHover={{ scale: 1.01, y: -2 }}
+            className="bg-brand-surface-container/60 backdrop-blur-2xl rounded-2xl border border-white/10 overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-center justify-between p-3.5 h-17 relative cursor-pointer"
             onClick={() => setIsNowPlayingOpen(true)}
             id="mini-player-card"
           >
@@ -221,7 +242,7 @@ function MainLayout() {
       </div>
 
       {/* Dynamic Navigation Sticky Bar */}
-      <nav className="fixed bottom-0 left-0 w-full z-45 h-16 bg-brand-surface-container/95 dark:bg-brand-surface-container/95 backdrop-blur-2xl border-t border-white/5 shadow-xl flex justify-around items-center px-6">
+      <nav className="fixed bottom-0 left-0 w-full z-45 h-16 bg-brand-surface-container/60 dark:bg-brand-surface-container/60 backdrop-blur-3xl border-t border-white/[0.03] shadow-2xl flex justify-around items-center px-6">
         
         <button 
           onClick={() => setActiveTab('home')}
@@ -262,15 +283,16 @@ function MainLayout() {
       <AnimatePresence>
         {isNowPlayingOpen && (
           <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            initial={{ y: "100%", opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: "100%", opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", damping: 25, stiffness: 250 }}
             className="fixed inset-0 z-50 overflow-hidden"
           >
             <NowPlayingDetail 
               onMinimize={() => setIsNowPlayingOpen(false)} 
               visualizerType={visualizerType}
+              onOpenQueue={() => setIsQueueOpen(true)}
             />
           </motion.div>
         )}
@@ -284,6 +306,22 @@ function MainLayout() {
         setVisualizerType={setVisualizerType}
         ambientGlow={ambientGlow}
         setAmbientGlow={setAmbientGlow}
+      />
+
+      <TrackOptionsModal 
+        track={trackOptionsTrack}
+        onClose={() => setTrackOptionsTrack(null)}
+      />
+
+      <QueuePanel 
+        isOpen={isQueueOpen}
+        onClose={() => setIsQueueOpen(false)}
+      />
+
+      <PlaylistDetailPanel 
+        playlistId={activePlaylistId}
+        onClose={() => setActivePlaylistId(null)}
+        onOpenTrackOptions={(track) => setTrackOptionsTrack(track)}
       />
 
     </div>

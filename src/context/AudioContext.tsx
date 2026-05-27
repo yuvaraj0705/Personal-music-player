@@ -6,7 +6,11 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Track, Playlist, AudioContextType } from '../types';
 import { ALL_TRACKS } from '../data';
-import { fetchTracksFromFirestore, signInAnonymouslyUser } from '../firebase/services';
+import { 
+  fetchTracksFromFirestore, 
+  signInAnonymouslyUser,
+  updateTrackCoverInFirestore
+} from '../firebase/services';
 
 const AudioContextInstance = createContext<AudioContextType | undefined>(undefined);
 
@@ -33,6 +37,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
   
   const [queue, setQueue] = useState<Track[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+    const saved = localStorage.getItem('music_player_playlists');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [isLoadingTracks, setIsLoadingTracks] = useState<boolean>(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -275,6 +283,85 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setQueue(prev => [...prev, track]);
   };
 
+  const savePlaylists = (newPlaylists: Playlist[]) => {
+    setPlaylists(newPlaylists);
+    localStorage.setItem('music_player_playlists', JSON.stringify(newPlaylists));
+  };
+
+  const createPlaylist = async (title: string, imgUrl: string) => {
+    const newPlaylist: Playlist = {
+      id: `playlist-${Date.now()}`,
+      title,
+      songCount: 0,
+      img: imgUrl || '/covers/playlist-discover-weekly.jpg',
+      songs: []
+    };
+    savePlaylists([...playlists, newPlaylist]);
+  };
+
+  const deletePlaylist = async (playlistId: string) => {
+    savePlaylists(playlists.filter(p => p.id !== playlistId));
+  };
+
+  const addToPlaylist = async (playlistId: string, track: Track) => {
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (!playlist) return;
+    
+    if (playlist.songs.some(s => s.id === track.id)) {
+      alert("Song is already in this playlist.");
+      return;
+    }
+    
+    const updatedSongs = [...playlist.songs, track];
+    const updatedPlaylists = playlists.map(p => 
+      p.id === playlistId ? { ...p, songs: updatedSongs, songCount: updatedSongs.length } : p
+    );
+    savePlaylists(updatedPlaylists);
+    alert(`Added to ${playlist.title}!`);
+  };
+
+  const removeFromPlaylist = (playlistId: string, trackId: string) => {
+    const updatedPlaylists = playlists.map(p => {
+      if (p.id === playlistId) {
+        const updatedSongs = p.songs.filter(s => s.id !== trackId);
+        return { ...p, songs: updatedSongs, songCount: updatedSongs.length };
+      }
+      return p;
+    });
+    savePlaylists(updatedPlaylists);
+  };
+
+  const removeFromQueue = (index: number) => {
+    setQueue(prev => {
+      const newQueue = [...prev];
+      newQueue.splice(index, 1);
+      return newQueue;
+    });
+  };
+
+  const clearQueue = () => {
+    setQueue([]);
+  };
+
+  const reorderQueue = (startIndex: number, endIndex: number) => {
+    setQueue(prev => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      return result;
+    });
+  };
+
+  const updateTrackCover = async (trackId: string, imgUrl: string) => {
+    setTracks(prev => prev.map(t => t.id === trackId ? { ...t, albumArt: imgUrl } : t));
+    // Also update any playlist that might have this track
+    setPlaylists(prev => prev.map(p => ({
+      ...p,
+      songs: p.songs.map(s => s.id === trackId ? { ...s, albumArt: imgUrl } : s)
+    })));
+    await updateTrackCoverInFirestore(trackId, imgUrl);
+  };
+
   return (
     <AudioContextInstance.Provider
       value={{
@@ -291,6 +378,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         favorites,
         recentlyPlayed,
         queue,
+        playlists,
         togglePlay,
         playTrack,
         playPlaylist,
@@ -303,6 +391,14 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         toggleShuffle,
         toggleFavorite,
         addToQueue,
+        createPlaylist,
+        deletePlaylist,
+        addToPlaylist,
+        removeFromPlaylist,
+        updateTrackCover,
+        removeFromQueue,
+        clearQueue,
+        reorderQueue,
         audioRef,
         audioContextRef,
         analyserRef

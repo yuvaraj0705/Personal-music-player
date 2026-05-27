@@ -1,6 +1,6 @@
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { db } from './config';
-import { ALL_TRACKS, ALL_PLAYLISTS } from '../data';
+import { ALL_TRACKS } from '../data';
 
 /**
  * Utility script to seed the Firestore database with mock data.
@@ -16,15 +16,9 @@ export const seedDatabase = async () => {
       console.log(`Track ${track.id} seeded.`);
     }
 
-    console.log("Seeding playlists...");
-    const playlistsCollection = collection(db, 'playlists');
-    for (const playlist of ALL_PLAYLISTS) {
-      const playlistRef = doc(playlistsCollection, playlist.id);
-      await setDoc(playlistRef, playlist);
-      console.log(`Playlist ${playlist.id} seeded.`);
-    }
-
-    console.log("Database seeded successfully!");
+    // We no longer seed mock playlists to allow a fresh personal library
+    
+    console.log("Database seeded successfully with tracks!");
   } catch (error) {
     console.error("Error seeding database:", error);
   }

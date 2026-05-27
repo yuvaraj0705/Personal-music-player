@@ -27,7 +27,8 @@ const generate = async () => {
     const filePath = path.join(songsDir, file);
     try {
       const metadata = await mm.parseFile(filePath);
-      const title = metadata.common.title || path.basename(file, '.mp3').replace(/_/g, ' ');
+      // Prioritize the file name over embedded ID3 tags, since users often rename files
+      const title = path.basename(file, '.mp3').replace(/_/g, ' ');
       const artist = metadata.common.artist || 'Unknown Artist';
       const album = metadata.common.album || 'Unknown Album';
       const durationSec = metadata.format.duration ? Math.floor(metadata.format.duration) : 180; // 3 min default
@@ -89,46 +90,6 @@ import { Track, Playlist } from './types';
 export const USER_AVATAR = "/covers/user-avatar.jpg";
 
 export const ALL_TRACKS: Track[] = ${tracksJsonString};
-
-export const DISCOVER_WEEKLY: Track[] = ALL_TRACKS.slice(0, 4);
-
-export const PLAYLIST_LATE_NIGHT_VIBES: Playlist = {
-  id: "playlist-1",
-  title: "Late Night Vibes",
-  songCount: ALL_TRACKS.length,
-  img: "/covers/playlist-1.jpg",
-  songs: ALL_TRACKS.slice(0, 3)
-};
-
-export const PLAYLIST_LO_FI_BEATS: Playlist = {
-  id: "playlist-2",
-  title: "Lo-Fi Beats",
-  songCount: ALL_TRACKS.length,
-  img: "/covers/playlist-2.jpg",
-  songs: ALL_TRACKS.slice(2, 5)
-};
-
-export const PLAYLIST_DAILY_LIFT: Playlist = {
-  id: "playlist-3",
-  title: "Daily Lift",
-  songCount: ALL_TRACKS.length,
-  img: "/covers/playlist-3.jpg",
-  songs: ALL_TRACKS.slice(1, 4)
-};
-
-export const ALL_PLAYLISTS: Playlist[] = [
-  PLAYLIST_LATE_NIGHT_VIBES,
-  PLAYLIST_LO_FI_BEATS,
-  PLAYLIST_DAILY_LIFT
-];
-
-export const DISCOVER_WEEKLY_PLAYLIST: Playlist = {
-  id: "playlist-discover-weekly",
-  title: "Discover Weekly",
-  songCount: DISCOVER_WEEKLY.length,
-  img: "/covers/playlist-discover-weekly.jpg",
-  songs: DISCOVER_WEEKLY
-};
 `;
 
   fs.writeFileSync(dataFile, newContent);

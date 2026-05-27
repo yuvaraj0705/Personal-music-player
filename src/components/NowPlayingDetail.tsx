@@ -30,11 +30,13 @@ import { Track } from '../types';
 interface NowPlayingDetailProps {
   onMinimize: () => void;
   visualizerType: 'bars' | 'wave' | 'retro-dots';
+  onOpenQueue: () => void;
 }
 
 export const NowPlayingDetail: React.FC<NowPlayingDetailProps> = ({ 
   onMinimize,
-  visualizerType 
+  visualizerType,
+  onOpenQueue
 }) => {
   const {
     currentTrack,
@@ -56,7 +58,8 @@ export const NowPlayingDetail: React.FC<NowPlayingDetailProps> = ({
     toggleShuffle,
     toggleFavorite,
     tracks,
-    currentTrackIndex
+    currentTrackIndex,
+    queue
   } = useAudio();
 
   const [showFullLyrics, setShowFullLyrics] = useState(false);
@@ -105,13 +108,21 @@ export const NowPlayingDetail: React.FC<NowPlayingDetailProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-brand-surface text-brand-on-surface overflow-y-auto pb-10 selection:bg-brand-primary/20">
       {/* Background Atmosphere */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-0 left-12 w-[80%] h-[70%] rounded-full bg-brand-primary/5 blur-[130px]" />
-        <div className="absolute bottom-10 right-0 w-[50%] h-[50%] rounded-full bg-brand-outline-variant/10 blur-[130px]" />
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-black">
+        <motion.img 
+          key={`bg-${currentTrack.id}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.5 }}
+          transition={{ duration: 1 }}
+          src={currentTrack.albumArt} 
+          alt=""
+          className="absolute inset-0 w-[120%] h-[120%] -left-[10%] -top-[10%] object-cover blur-[100px] animate-[pulse_15s_infinite_ease-in-out]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-surface/30 via-brand-surface/70 to-black/95" />
       </div>
 
       {/* Top Bar Header */}
-      <header className="sticky top-0 left-0 w-full z-10 flex justify-between items-center px-6 h-20 bg-brand-surface/75 backdrop-blur-md">
+      <header className="sticky top-0 left-0 w-full z-10 flex justify-between items-center px-6 h-20 bg-transparent">
         <button 
           onClick={onMinimize}
           className="p-2 hover:bg-white/5 rounded-full transition-colors active:scale-95"
@@ -143,9 +154,9 @@ export const NowPlayingDetail: React.FC<NowPlayingDetailProps> = ({
         {/* Left Side: Artwork & Player controls */}
         <div className="flex flex-col items-center">
           {/* Artwork Frame */}
-          <div className="relative aspect-square w-full max-w-[340px] md:max-w-[400px] mb-8 bg-brand-surface-container-high rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+          <div className="relative aspect-square w-full max-w-[340px] md:max-w-[400px] mb-8 bg-brand-surface-container-high rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 group">
             {showVisualizer ? (
-              <div className="absolute inset-0 z-10 p-4 bg-black/40 backdrop-blur-sm flex flex-col justify-end">
+              <div className="absolute inset-0 z-10 p-4 bg-black/30 backdrop-blur-md flex flex-col justify-end transition-all">
                 <div className="h-28 w-full">
                   <Visualizer type={visualizerType} />
                 </div>
@@ -165,7 +176,7 @@ export const NowPlayingDetail: React.FC<NowPlayingDetailProps> = ({
               src={currentTrack.albumArt} 
               alt={currentTrack.title}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
             
             {!showVisualizer && (
@@ -269,7 +280,7 @@ export const NowPlayingDetail: React.FC<NowPlayingDetailProps> = ({
         <div className="w-full flex flex-col gap-6 h-full md:max-h-[580px]">
           
           {/* Synchronized Scrolling Lyrics Module */}
-          <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 flex flex-col h-[340px] md:h-[420px] relative overflow-hidden group">
+          <div className="bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex flex-col h-[340px] md:h-[420px] relative overflow-hidden group shadow-2xl">
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-white/5">
               <div className="flex items-center gap-1.5">
                 <Music4 size={14} className="text-brand-primary animate-pulse" />
@@ -315,7 +326,7 @@ export const NowPlayingDetail: React.FC<NowPlayingDetailProps> = ({
           </div>
 
           {/* Casting, Devices, Sharing, Volume panel */}
-          <div className="bg-brand-surface-container rounded-2xl p-5 border border-white/5 space-y-4">
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-2xl p-5 border border-white/10 space-y-4 shadow-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-5 shrink-0">
                 <button 
@@ -369,16 +380,17 @@ export const NowPlayingDetail: React.FC<NowPlayingDetailProps> = ({
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="bg-brand-surface-container-high border border-white/5 px-6 py-2.5 rounded-full flex items-center gap-3 shadow-xl cursor-copy hover:bg-brand-surface-container transition-colors max-w-sm w-full font-sans justify-center"
-          onClick={() => {
-            // Immediately crossfade to next track
-            nextTrack();
-          }}
+          className="bg-brand-surface-container-high border border-white/5 px-6 py-2.5 rounded-full flex items-center gap-3 shadow-xl cursor-pointer hover:bg-brand-surface-container transition-colors max-w-sm w-full font-sans justify-center"
+          onClick={onOpenQueue}
         >
           <div className="w-2 h-2 rounded-full bg-brand-primary animate-ping shrink-0" />
           <span className="text-[10px] font-bold text-brand-on-surface-variant uppercase tracking-wider font-mono">Up Next:</span>
-          <span className="text-xs font-bold text-white truncate max-w-[150px]">{nextTrackInQueue.title}</span>
-          <span className="text-xs text-brand-on-surface-variant/70 shrink-0">by {nextTrackInQueue.artist}</span>
+          <span className="text-xs font-bold text-white truncate max-w-[150px]">
+            {queue.length > 0 ? queue[0].title : nextTrackInQueue.title}
+          </span>
+          <span className="text-xs text-brand-on-surface-variant/70 shrink-0">
+            by {queue.length > 0 ? queue[0].artist : nextTrackInQueue.artist}
+          </span>
         </motion.div>
       </footer>
     </div>
