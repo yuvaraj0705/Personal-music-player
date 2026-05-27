@@ -31,9 +31,40 @@ const watchSongsPlugin = () => ({
   }
 });
 
+import { VitePWA } from 'vite-plugin-pwa';
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), watchSongsPlugin()],
+    plugins: [
+      react(), 
+      tailwindcss(), 
+      watchSongsPlugin(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+        manifest: {
+          name: "Uv's concert",
+          short_name: "UvsConcert",
+          description: 'High-Fidelity Cyber Music Player',
+          theme_color: '#131313',
+          background_color: '#131313',
+          display: 'standalone',
+          icons: [
+            {
+              src: 'https://cdn-icons-png.flaticon.com/512/3844/3844724.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'https://cdn-icons-png.flaticon.com/512/3844/3844724.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable'
+            }
+          ]
+        }
+      })
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
